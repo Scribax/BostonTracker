@@ -3,8 +3,8 @@ import Constants from 'expo-constants';
 
 // Configuración de la API
 const API_BASE_URL = __DEV__ 
-  ? 'http://185.144.157.163:5000/api' // Servidor local con IP accesible desde móvil
-  : 'http://185.144.157.163:5000/api';
+  ? 'http://186.64.121.21:5000/api' // Servidor local con IP accesible desde móvil
+  : 'http://186.64.121.21:5000/api';
 
 class ApiService {
   constructor() {

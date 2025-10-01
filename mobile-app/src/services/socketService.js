@@ -2,7 +2,7 @@ import io from 'socket.io-client';
 import Constants from 'expo-constants';
 
 // Configuración del servidor
-const SERVER_URL = Constants.expoConfig?.extra?.EXPO_PUBLIC_SERVER_URL || 'http://185.144.157.163:5000';
+const SERVER_URL = Constants.expoConfig?.extra?.EXPO_PUBLIC_SERVER_URL || 'http://186.64.121.21:5000';
 
 class SocketService {
   constructor() {
