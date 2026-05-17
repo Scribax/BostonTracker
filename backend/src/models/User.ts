@@ -16,19 +16,19 @@ class User
   extends Model<UserAttributes, UserCreationAttributes>
   implements UserAttributes
 {
-  public id!: string;
-  public name!: string;
-  public email?: string;
-  public employeeId?: string;
-  public password!: string;
-  public role!: 'admin' | 'delivery';
-  public phone?: string;
-  public isActive!: boolean;
-  public lastLogin?: Date;
+  declare id: string;
+  declare name: string;
+  declare email: string | undefined;
+  declare employeeId: string | undefined;
+  declare password: string;
+  declare role: 'admin' | 'delivery';
+  declare phone: string | undefined;
+  declare isActive: boolean;
+  declare lastLogin: Date | undefined;
 
   // Timestamps
-  public readonly createdAt!: Date;
-  public readonly updatedAt!: Date;
+  declare readonly createdAt: Date;
+  declare readonly updatedAt: Date;
 
   // Instance methods
   public async matchPassword(enteredPassword: string): Promise<boolean> {
