@@ -1,0 +1,387 @@
+import Logger from "../config/logger.js";
+import React, { useState, useEffect, useCallback } from 'react';
+import { Container, Navbar, Nav, Button, Spinner, Alert, Tab, Tabs } from 'react-bootstrap';
+import { useAuth } from '../context/AuthContext';
+import MapComponent from './MapComponent';
+import DeliveryList from './DeliveryList';
+import UserManagement from './UserManagement';
+import socketService from '../services/socket';
+import TripHistory from './TripHistory';
+import APKManager from './APKManager';
+import deliveryService from '../services/deliveryService';
+import toast from 'react-hot-toast';
+
+const Dashboard = () => {
+  // Guard para evitar hooks inconsistentes durante hot-reload
+  let authData;
+  try {
+    authData = useAuth();
+  } catch (error) {
+    console.error('🚨 Error obteniendo AuthContext:', error);
+    // En caso de error, usar valores por defecto
+    authData = {
+      user: null,
+      token: localStorage.getItem('bostonToken'),
+      logout: async () => {
+        localStorage.removeItem('bostonToken');
+        window.location.href = '/login';
+      }
+    };
+  }
+  
+  const { user, logout, token } = authData;
+  
+  const [deliveries, setDeliveries] = useState([]);
+  const [selectedDelivery, setSelectedDelivery] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [socketConnected, setSocketConnected] = useState(false);
+  const [activeTab, setActiveTab] = useState('tracking');
+
+  // Cargar deliveries activos
+  const loadDeliveries = useCallback(async () => {
+    try {
+      console.log('📂 Iniciando carga de deliveries...');
+      setLoading(true);
+      const result = await deliveryService.getActiveDeliveries();
+      
+      console.log('📋 Resultado de getActiveDeliveries:', result);
+      
+      if (result && result.success) {
+        const deliveriesData = Array.isArray(result.data) ? result.data : [];
+        console.log(`✅ ${deliveriesData.length} deliveries cargados`);
+        setDeliveries(deliveriesData);
+        setError('');
+      } else {
+        const errorMsg = result?.error || 'Error cargando deliveries';
+        console.error('❌ Error cargando deliveries:', errorMsg);
+        setError(errorMsg);
+        // toast.error(errorMsg); // Comentado para evitar spam de notificaciones
+        // No limpiar deliveries existentes en caso de error
+      }
+    } catch (err) {
+      console.error('💥 Error crítico cargando deliveries:', err);
+      console.error('Stack trace:', err.stack);
+      const errorMsg = 'Error de conexión con el servidor';
+      setError(errorMsg);
+      // toast.error(errorMsg); // Comentado para evitar spam de notificaciones
+      // No limpiar deliveries existentes en caso de error
+    } finally {
+      setLoading(false);
+      console.log('🏁 Carga de deliveries finalizada');
+    }
+  }, []);
+
+  // Configurar Socket.io
+  useEffect(() => {
+    if (token && user?.role === 'admin') {
+      // Conectar socket
+      socketService.connect(token);
+      
+      // Verificar conexión
+      const checkConnection = () => {
+        setSocketConnected(socketService.isConnected);
+      };
+      
+      const interval = setInterval(checkConnection, 1000);
+      
+      // Limpiar al desmontar
+      return () => {
+        clearInterval(interval);
+        socketService.disconnect();
+      };
+    }
+  }, [token, user]);
+
+  // Configurar listeners de Socket.io
+  useEffect(() => {
+    if (socketConnected) {
+      // Listener para actualizaciones de ubicación
+      const handleLocationUpdate = (data) => {
+        Logger.deliveryUpdate('Location update:', data);
+        
+        setDeliveries(prev => prev.map(delivery => {
+          if (delivery.deliveryId === data.deliveryId) {
+            return {
+              ...delivery,
+              currentLocation: data.currentLocation,
+              mileage: data.mileage,
+              duration: data.duration
+            };
+          }
+          return delivery;
+        }));
+
+        // Notificaciones de ubicación eliminadas para mejorar UX del dashboard
+      };
+
+      // Listener para viajes iniciados
+      const handleTripStarted = (data) => {
+        Logger.tripUpdate('Trip started:', data);
+        
+        toast.success(
+          `${data.deliveryName} ha iniciado un viaje`,
+          { duration: 3000 }
+        );
+        
+        // Recargar deliveries para obtener datos actualizados
+        loadDeliveries();
+      };
+
+      // Listener para viajes completados
+      const handleTripCompleted = (data) => {
+        console.log('✅ Viaje completado:', data);
+        
+        toast.success(
+          `${data.deliveryName} completó su viaje - ${deliveryService.formatMileage(data.totalMileage)}`,
+          { duration: 4000 }
+        );
+        
+        // Recargar deliveries
+        loadDeliveries();
+      };
+
+      // Listener para actualizaciones múltiples de trips
+      const handleTripsUpdate = (tripsData) => {
+        console.log('🔄 Actualización de múltiples trips:', tripsData);
+        
+        setDeliveries(prev => {
+          return prev.map(delivery => {
+            const updatedTrip = tripsData.find(trip => trip.deliveryId === delivery.deliveryId);
+            if (updatedTrip) {
+              return {
+                ...delivery,
+                currentLocation: updatedTrip.currentLocation,
+                mileage: updatedTrip.mileage,
+                duration: updatedTrip.duration,
+                averageSpeed: updatedTrip.averageSpeed
+              };
+            }
+            return delivery;
+          });
+        });
+      };
+
+      // Registrar listeners
+      socketService.on("locationUpdate", handleLocationUpdate);
+      socketService.on("tripStarted", handleTripStarted);
+      socketService.on("tripCompleted", handleTripCompleted);
+      socketService.on("tripsUpdate", handleTripsUpdate);
+
+      // Limpiar listeners al desmontar
+      return () => {
+        socketService.off('locationUpdate', handleLocationUpdate);
+        socketService.off('tripStarted', handleTripStarted);
+        socketService.off('tripCompleted', handleTripCompleted);
+        socketService.off('tripsUpdate', handleTripsUpdate);
+      };
+    }
+  }, [socketConnected, loadDeliveries]);
+
+  // Cargar datos iniciales
+  useEffect(() => {
+    loadDeliveries();
+    
+    // Recargar cada 30 segundos como backup
+    const interval = setInterval(loadDeliveries, 120000);
+    return () => clearInterval(interval);
+  }, [loadDeliveries]);
+
+  // Manejar logout
+  const handleLogout = async () => {
+    try {
+      await logout();
+      toast.success('Sesión cerrada correctamente');
+    } catch (error) {
+      console.error('Error en logout:', error);
+      toast.error('Error cerrando sesión');
+    }
+  };
+
+  // Manejar selección de delivery
+  const handleDeliverySelect = useCallback((deliveryId) => {
+    setSelectedDelivery(deliveryId);
+  }, []);
+
+  // Manejar acciones de delivery (iniciar/detener)
+  const handleDeliveryAction = async (action, deliveryId) => {
+    try {
+      console.log(`🔄 Ejecutando acción '${action}' para delivery ${deliveryId}`);
+      
+      let result;
+      
+      if (action === 'start') {
+        console.log('▶️ Iniciando viaje...');
+        result = await deliveryService.startTrip(deliveryId);
+      } else if (action === 'stop') {
+        console.log('⏹️ Deteniendo viaje...');
+        result = await deliveryService.stopTrip(deliveryId);
+      } else {
+        throw new Error(`Acción desconocida: ${action}`);
+      }
+      
+      console.log('📋 Resultado de la acción:', result);
+      
+      if (result?.success) {
+        toast.success(result.message || `${action === 'start' ? 'Viaje iniciado' : 'Viaje detenido'} correctamente`);
+        console.log('✅ Acción exitosa, recargando deliveries...');
+        // Recargar deliveries
+        await loadDeliveries();
+      } else {
+        console.error('❌ Error en el resultado:', result);
+        toast.error(result?.error || 'Error en la acción');
+      }
+    } catch (error) {
+      console.error('💥 Error crítico en acción de delivery:', error);
+      console.error('Stack trace:', error.stack);
+      
+      // Mostrar error más específico
+      const errorMessage = error.response?.data?.message || error.message || 'Error realizando la acción';
+      toast.error(errorMessage);
+      
+      // Intentar recargar deliveries aunque haya fallado
+      try {
+        await loadDeliveries();
+      } catch (reloadError) {
+        console.error('Error recargando deliveries después del fallo:', reloadError);
+      }
+    }
+  };
+
+  if (loading && deliveries.length === 0) {
+    return (
+      <div className="d-flex align-items-center justify-content-center" style={{ height: '100vh' }}>
+        <div className="text-center">
+          <Spinner animation="border" variant="danger" className="mb-3" />
+          <h5>Cargando Dashboard...</h5>
+          <p className="text-muted">Conectando al sistema de tracking</p>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="dashboard">
+      {/* Navbar */}
+      <Navbar className="dashboard-navbar" expand="lg">
+        <Container fluid className="px-4">
+          <Navbar.Brand className="dashboard-brand text-boston-red">
+            <i className="bi bi-geo-alt-fill me-2"></i>
+            BOSTON Tracker
+          </Navbar.Brand>
+          
+          <Nav className="ms-auto align-items-center">
+            {/* Estado de conexión */}
+            <div className="me-3 d-flex align-items-center">
+              <div 
+                className={`rounded-circle me-2 ${socketConnected ? 'bg-success' : 'bg-warning'}`}
+                style={{ width: '8px', height: '8px' }}
+              />
+              <small className="text-muted">
+                {socketConnected ? 'Conectado' : 'Desconectado'}
+              </small>
+            </div>
+            
+            {/* Info del usuario */}
+            <span className="navbar-text me-3">
+              <i className="bi bi-person-circle me-1"></i>
+              {user?.name}
+            </span>
+            
+            {/* Botón de logout */}
+            <Button 
+              variant="outline-danger" 
+              size="sm"
+              onClick={handleLogout}
+            >
+              <i className="bi bi-box-arrow-right me-1"></i>
+              Salir
+            </Button>
+          </Nav>
+        </Container>
+      </Navbar>
+
+      {/* Contenido principal con pestañas */}
+      <Container fluid className="p-0">
+        {error && (
+          <Alert variant="danger" className="m-3 mb-0" dismissible onClose={() => setError('')}>
+            <i className="bi bi-exclamation-triangle-fill me-2"></i>
+            {error}
+          </Alert>
+        )}
+        
+        <Tabs 
+          activeKey={activeTab} 
+          onSelect={(k) => setActiveTab(k)}
+          className="dashboard-tabs"
+        >
+          <Tab 
+            eventKey="tracking" 
+            title={
+              <span>
+                <i className="bi bi-geo-alt me-2"></i>
+                Tracking en Tiempo Real
+              </span>
+            }
+          >
+            <div className="dashboard-main">
+              {/* Mapa */}
+              <MapComponent 
+                deliveries={deliveries}
+                selectedDelivery={selectedDelivery}
+                onDeliverySelect={handleDeliverySelect}
+              />
+              
+              {/* Lista de deliveries */}
+              <DeliveryList 
+                deliveries={deliveries}
+                selectedDelivery={selectedDelivery}
+                onDeliverySelect={handleDeliverySelect}
+                onDeliveryAction={handleDeliveryAction}
+                loading={loading}
+              />
+            </div>
+          </Tab>
+
+          <Tab 
+            eventKey="history" 
+            title={
+              <span>
+                <i className="bi bi-clock-history me-2"></i>
+                Historial de Viajes
+              </span>
+            }
+          >
+            <TripHistory />
+          </Tab>
+          
+
+          <Tab 
+            eventKey="apk" 
+            title={
+              <span>
+                <i className="bi bi-phone me-2"></i>
+                Gestión APK
+              </span>
+            }
+          >
+            <APKManager />
+          </Tab>
+          <Tab 
+            eventKey="users" 
+            title={
+              <span>
+                <i className="bi bi-people me-2"></i>
+                Gestión de Usuarios
+              </span>
+            }
+          >
+            <UserManagement />
+          </Tab>
+        </Tabs>
+      </Container>
+    </div>
+  );
+};
+
+export default Dashboard;

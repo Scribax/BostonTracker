@@ -1,0 +1,260 @@
+import React, { useState, useEffect } from 'react';
+import { Card, Badge, Spinner, Alert, Button } from 'react-bootstrap';
+import deliveryService from '../services/deliveryService';
+import socketService from '../services/socket';
+import { logger } from '../config/logger';
+
+const DeliveryList = ({ onDeliverySelect }) => {
+  const [deliveries, setDeliveries] = useState([]); // 🔧 INICIALIZADO COMO ARRAY VACÍO
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [selectedDelivery, setSelectedDelivery] = useState(null);
+  const [stoppingDelivery, setStoppingDelivery] = useState(null);
+
+  // Cargar deliveries inicial
+  useEffect(() => {
+    loadDeliveries();
+    
+    // Socket listeners para actualizaciones en tiempo real
+    socketService.on('deliveryUpdate', handleDeliveryUpdate);
+    socketService.on('locationUpdate', handleLocationUpdate);
+    
+    // Cleanup al desmontar
+    return () => {
+      socketService.off('deliveryUpdate', handleDeliveryUpdate);
+      socketService.off('locationUpdate', handleLocationUpdate);
+    };
+  }, []);
+
+  const loadDeliveries = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      
+      const response = await deliveryService.getActiveDeliveries();
+      
+      if (response.success) {
+        setDeliveries(response.data || []); // ✅ SIEMPRE ARRAY
+        logger.info('📦 Deliveries cargados:', response.data?.length || 0);
+      } else {
+        throw new Error('Error al cargar deliveries');
+      }
+    } catch (error) {
+      logger.error('❌ Error cargando deliveries:', error);
+      setError('Error al cargar deliveries');
+      setDeliveries([]); // ✅ ASEGURAR ARRAY EN ERROR
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDeliveryUpdate = (delivery) => {
+    logger.info('🔄 Actualización de delivery:', delivery);
+    setDeliveries(prev => {
+      if (!Array.isArray(prev)) return [delivery]; // ✅ SAFETY CHECK
+      
+      const existingIndex = prev.findIndex(d => d.id === delivery.id);
+      if (existingIndex >= 0) {
+        const updated = [...prev];
+        updated[existingIndex] = { ...updated[existingIndex], ...delivery };
+        return updated;
+      }
+      return [...prev, delivery];
+    });
+  };
+
+  const handleLocationUpdate = (locationData) => {
+    logger.info('📍 Actualización de ubicación:', locationData);
+    setDeliveries(prev => {
+      if (!Array.isArray(prev)) return []; // ✅ SAFETY CHECK
+      
+      return prev.map(delivery => 
+        delivery.id === locationData.deliveryId
+          ? { ...delivery, currentLocation: locationData }
+          : delivery
+      );
+    });
+  };
+
+  const handleDeliveryClick = (delivery) => {
+    setSelectedDelivery(delivery);
+    if (onDeliverySelect) {
+      onDeliverySelect(delivery);
+    }
+  };
+
+  const handleStopTrip = async (delivery) => {
+    const confirmed = window.confirm(`¿Estás seguro de detener el viaje de ${delivery.deliveryName || delivery.employeeId}?`);
+    
+    if (!confirmed) return;
+
+    setStoppingDelivery(delivery.id);
+
+    try {
+      // Actualizar estado inmediatamente para UI responsive
+      setDeliveries(prev => prev.filter(d => d.id !== delivery.id));
+      
+      const response = await deliveryService.stopTrip(delivery.deliveryId || delivery.id);
+      
+      if (response.success) {
+        logger.info("🛑 Viaje detenido exitosamente:", delivery.deliveryName);
+        // Recargar para asegurar sincronización con servidor
+        setTimeout(() => loadDeliveries(), 1000);
+      } else {
+        // Si falla, restaurar el delivery en la lista
+        setDeliveries(prev => [...prev, delivery]);
+        throw new Error(response.error || "Error deteniendo viaje");
+      }
+    } catch (error) {
+      logger.error("❌ Error deteniendo viaje:", error);
+      // Restaurar delivery en caso de error
+      setDeliveries(prev => [...prev, delivery]);
+      alert("Error al detener el viaje. Inténtalo de nuevo.");
+    } finally {
+      setStoppingDelivery(null);
+    }
+  };
+
+  const getStatusBadge = (status) => {
+    const statusMap = {
+      'pending': { variant: 'warning', text: 'Pendiente' },
+      'in_progress': { variant: 'primary', text: 'En Progreso' },
+      'active': { variant: 'success', text: 'Activo' },
+      'completed': { variant: 'success', text: 'Completado' },
+      'cancelled': { variant: 'danger', text: 'Cancelado' }
+    };
+    
+    const statusConfig = statusMap[status] || { variant: 'secondary', text: status };
+    return <Badge bg={statusConfig.variant}>{statusConfig.text}</Badge>;
+  };
+
+  const getPriorityBadge = (priority) => {
+    const priorityMap = {
+      'high': { variant: 'danger', text: 'Alta' },
+      'medium': { variant: 'warning', text: 'Media' },
+      'low': { variant: 'success', text: 'Baja' }
+    };
+    
+    const priorityConfig = priorityMap[priority] || { variant: 'secondary', text: priority };
+    return <Badge bg={priorityConfig.variant}>{priorityConfig.text}</Badge>;
+  };
+
+  if (loading) {
+    return (
+      <div className="text-center p-4">
+        <Spinner animation="border" variant="primary" />
+        <p className="mt-2">Cargando deliveries...</p>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <Alert variant="danger" className="m-3">
+        <Alert.Heading>Error</Alert.Heading>
+        <p>{error}</p>
+        <button 
+          className="btn btn-outline-danger" 
+          onClick={loadDeliveries}
+        >
+          Reintentar
+        </button>
+      </Alert>
+    );
+  }
+
+  return (
+    <div className="delivery-list-container">
+      <div className="d-flex justify-content-between align-items-center mb-3">
+        <h5 className="mb-0">
+          📦 Deliveries Activos 
+          <Badge bg="info" className="ms-2">
+            {Array.isArray(deliveries) ? deliveries.length : 0}
+          </Badge>
+        </h5>
+        <button 
+          className="btn btn-outline-primary btn-sm"
+          onClick={loadDeliveries}
+          disabled={loading}
+        >
+          🔄 Actualizar
+        </button>
+      </div>
+
+      {!Array.isArray(deliveries) || deliveries.length === 0 ? (
+        <Alert variant="info" className="text-center">
+          📭 No hay deliveries activos en este momento
+        </Alert>
+      ) : (
+        <div className="delivery-cards">
+          {deliveries.map(delivery => (
+            <Card 
+              key={delivery.id}
+              className={`mb-3 delivery-card ${selectedDelivery?.id === delivery.id ? 'border-primary' : ''}`}
+              style={{ cursor: 'pointer' }}
+            >
+              <Card.Header 
+                className="d-flex justify-content-between align-items-center"
+                onClick={() => handleDeliveryClick(delivery)}
+              >
+                <div>
+                  <strong>{delivery.employeeId || delivery.deliveryName}</strong>
+                  {delivery.priority && (
+                    <span className="ms-2">{getPriorityBadge(delivery.priority)}</span>
+                  )}
+                </div>
+                {getStatusBadge(delivery.status)}
+              </Card.Header>
+              
+              <Card.Body onClick={() => handleDeliveryClick(delivery)}>
+                <Card.Text>
+                  <strong>📍 Origen:</strong> {delivery.pickup_address || "No especificado"}<br />
+                  <strong>🎯 Destino:</strong> {delivery.delivery_address || "No especificado"}<br />
+                  <strong>👤 Cliente:</strong> {delivery.deliveryName || "No especificado"}<br />
+                  {delivery.estimated_time && (
+                    <>
+                      <strong>⏰ Tiempo estimado:</strong> {delivery.estimated_time} min<br />
+                    </>
+                  )}
+                  {delivery.currentLocation && (
+                    <>
+                      <strong>📡 Última ubicación:</strong> {new Date(delivery.currentLocation.timestamp).toLocaleTimeString()}<br />
+                    </>
+                  )}
+                  <strong>⏱️ Duración:</strong> {delivery.duration || 0} min<br />
+                  <strong>📏 Kilometraje:</strong> {delivery.mileage || 0} km
+                </Card.Text>
+              </Card.Body>
+
+              {/* Botón Detener Viaje */}
+              <Card.Footer className="d-flex justify-content-end">
+                <Button
+                  variant="danger"
+                  size="sm"
+                  onClick={(e) => {
+                    e.stopPropagation(); // Evitar trigger del click del card
+                    handleStopTrip(delivery);
+                  }}
+                  disabled={stoppingDelivery === delivery.id}
+                >
+                  {stoppingDelivery === delivery.id ? (
+                    <>
+                      <Spinner animation="border" size="sm" className="me-1" />
+                      Deteniendo...
+                    </>
+                  ) : (
+                    <>
+                      🛑 Detener Viaje
+                    </>
+                  )}
+                </Button>
+              </Card.Footer>
+            </Card>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+};
+
+export default DeliveryList;

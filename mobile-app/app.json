@@ -1,0 +1,103 @@
+{
+  "expo": {
+    "name": "Boston Tracker",
+    "slug": "boston-tracker-mobile",
+    "version": "1.0.1",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "splash": {
+      "image": "./assets/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#dc3545"
+    },
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "com.bostonburgers.tracker",
+      "infoPlist": {
+        "NSLocationAlwaysAndWhenInUseUsageDescription": "Esta app necesita acceso a tu ubicación para calcular distancias precisas durante tus entregas.",
+        "NSLocationWhenInUseUsageDescription": "Esta app necesita acceso a tu ubicación para calcular distancias precisas durante tus entregas.",
+        "NSLocationAlwaysUsageDescription": "Esta app necesita acceso a tu ubicación en segundo plano para calcular distancias precisas durante tus entregas.",
+        "UIBackgroundModes": [
+          "location",
+          "background-fetch",
+          "background-processing"
+        ]
+      }
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#dc3545"
+      },
+      "package": "com.bostonburgers.tracker",
+      "usesCleartextTraffic": true,
+      "versionCode": 2,
+      "permissions": [
+        "ACCESS_COARSE_LOCATION",
+        "ACCESS_FINE_LOCATION",
+        "ACCESS_BACKGROUND_LOCATION",
+        "FOREGROUND_SERVICE",
+        "FOREGROUND_SERVICE_LOCATION",
+        "WAKE_LOCK",
+        "REQUEST_IGNORE_BATTERY_OPTIMIZATIONS",
+        "DISABLE_KEYGUARD",
+        "RECEIVE_BOOT_COMPLETED",
+        "android.permission.ACCESS_COARSE_LOCATION",
+        "android.permission.ACCESS_FINE_LOCATION"
+      ]
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    },
+    "plugins": [
+      [
+        "expo-location",
+        {
+          "locationAlwaysAndWhenInUsePermission": "Esta app necesita acceso a tu ubicación para calcular distancias precisas durante tus entregas.",
+          "locationAlwaysPermission": "Esta app necesita acceso a tu ubicación en segundo plano para calcular distancias precisas durante tus entregas.",
+          "locationWhenInUsePermission": "Esta app necesita acceso a tu ubicación para calcular distancias precisas durante tus entregas.",
+          "isIosBackgroundLocationEnabled": true,
+          "isAndroidBackgroundLocationEnabled": true,
+          "isAndroidForegroundServiceEnabled": true
+        }
+      ],
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/notification-icon.png",
+          "color": "#dc3545"
+        }
+      ],
+      [
+        "expo-task-manager"
+      ],
+      "expo-font",
+      "expo-asset",
+      [
+        "expo-build-properties",
+        {
+          "android": {
+            "kotlinVersion": "1.9.25",
+            "usesCleartextTraffic": true,
+            "networkInspector": false
+          }
+        }
+      ]
+    ],
+    "extra": {
+      "EXPO_PUBLIC_SERVER_URL": "http://186.64.123.15:5000",
+      "EXPO_PUBLIC_TRACKING_INTERVAL": "5000",
+      "EXPO_PUBLIC_HIGH_FREQUENCY_MODE": "true",
+      "EXPO_PUBLIC_MIN_DISTANCE_FILTER": "5",
+      "EXPO_PUBLIC_DEBUG_MODE": "true",
+      "EXPO_PUBLIC_AGGRESSIVE_BACKGROUND_MODE": "true",
+      "eas": {
+        "projectId": "a4f09dab-7078-499e-bcf6-6c485fd3b53f"
+      }
+    }
+  }
+}
