@@ -171,14 +171,6 @@ Trip.init(
         validLocations: 0,
       }),
     },
-    deliveryName: {
-      type: DataTypes.STRING,
-      allowNull: true,
-    },
-    currentLocation: {
-      type: DataTypes.JSON,
-      allowNull: true,
-    },
     notes: {
       type: DataTypes.STRING(500),
       allowNull: true,
