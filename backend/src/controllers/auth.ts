@@ -378,13 +378,12 @@ export const deleteUser = async (
       return;
     }
 
-    // Soft delete - mark as inactive instead of hard delete
-    user.isActive = false;
-    await user.save();
+    // Hard delete - actually remove the user
+    await user.destroy();
 
     res.json({
       success: true,
-      message: 'Usuario desactivado exitosamente',
+      message: 'Usuario eliminado exitosamente',
     });
   } catch (error) {
     console.error('Delete user error:', error);
