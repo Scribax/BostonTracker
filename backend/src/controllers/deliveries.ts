@@ -36,14 +36,14 @@ const getIO = (req: AuthenticatedRequest): SocketIOServer => {
  * Convert Trip to TripDTO
  */
 const toTripDTO = (trip: Trip): TripDTO => ({
-  id: trip.id,
-  deliveryId: trip.deliveryId,
-  startTime: trip.startTime,
-  endTime: trip.endTime,
-  status: trip.status,
-  mileage: trip.mileage,
-  duration: trip.duration,
-  averageSpeed: trip.averageSpeed,
+  id: (trip as any).id,
+  deliveryId: (trip as any).deliveryId,
+  startTime: (trip as any).startTime,
+  endTime: (trip as any).endTime,
+  status: (trip as any).status,
+  mileage: (trip as any).mileage,
+  duration: (trip as any).duration,
+  averageSpeed: (trip as any).averageSpeed,
   totalLocations: 0, // Will be populated separately
 });
 
@@ -71,18 +71,18 @@ export const getActiveDeliveries = async (
     const deliveries = await Promise.all(
       activeTrips.map(async (trip) => {
         const locationCount = await Location.count({
-          where: { tripId: trip.id },
+          where: { tripId: (trip as any).id },
         });
 
         return {
-          id: trip.id,
-          deliveryId: trip.deliveryId,
-          employeeId: (trip as unknown as { delivery?: { employeeId: string } }).delivery?.employeeId,
-          startTime: trip.startTime,
-          mileage: trip.mileage,
+          id: (trip as any).id,
+          deliveryId: (trip as any).deliveryId,
+          employeeId: (trip as any).delivery?.employeeId,
+          startTime: (trip as any).startTime,
+          mileage: (trip as any).mileage,
           duration: trip.getDuration(),
           averageSpeed: trip.getAverageSpeed(),
-          status: trip.status,
+          status: (trip as any).status,
           totalLocations: locationCount,
         };
       })
@@ -162,7 +162,7 @@ export const startDeliveryTrip = async (
     // Add initial location if provided
     if (latitude && longitude && isValidCoordinate(latitude, longitude)) {
       await Location.create({
-        tripId: trip.id,
+        tripId: (trip as any).id,
         latitude,
         longitude,
         accuracy,
@@ -175,9 +175,9 @@ export const startDeliveryTrip = async (
     // Emit event to admins
     const io = getIO(req);
     io.to('admins').emit('tripStarted', {
-      tripId: trip.id,
-      deliveryId: trip.deliveryId,
-      startTime: trip.startTime,
+      tripId: (trip as any).id,
+      deliveryId: (trip as any).deliveryId,
+      startTime: (trip as any).startTime,
     } as TripEvent);
 
     res.status(201).json({
@@ -221,7 +221,7 @@ export const stopDeliveryTrip = async (
 
     // Get all locations for this trip
     const locations = await Location.findAll({
-      where: { tripId: activeTrip.id },
+      where: { tripId: (activeTrip as any).id },
       order: [['timestamp', 'ASC']],
     });
 
@@ -232,22 +232,22 @@ export const stopDeliveryTrip = async (
     const finalAvgSpeed = calculateAverageSpeed(filteredLocations, finalDuration);
 
     // Update trip
-    activeTrip.endTime = new Date();
-    activeTrip.status = 'completed';
-    activeTrip.mileage = finalMileage;
-    activeTrip.duration = finalDuration;
-    activeTrip.averageSpeed = finalAvgSpeed;
+    (activeTrip as any).endTime = new Date();
+    (activeTrip as any).status = 'completed';
+    (activeTrip as any).mileage = finalMileage;
+    (activeTrip as any).duration = finalDuration;
+    (activeTrip as any).averageSpeed = finalAvgSpeed;
 
     await activeTrip.save();
 
     // Emit event to admins
     const io = getIO(req);
     io.to('admins').emit('tripCompleted', {
-      tripId: activeTrip.id,
-      deliveryId: activeTrip.deliveryId,
-      endTime: activeTrip.endTime,
-      totalMileage: activeTrip.mileage,
-      duration: activeTrip.duration,
+      tripId: (activeTrip as any).id,
+      deliveryId: (activeTrip as any).deliveryId,
+      endTime: (activeTrip as any).endTime,
+      totalMileage: (activeTrip as any).mileage,
+      duration: (activeTrip as any).duration,
     } as TripCompletedEvent);
 
     res.json({
@@ -303,7 +303,7 @@ export const updateLocation = async (
 
     // Create location record
     await Location.create({
-      tripId: activeTrip.id,
+      tripId: (activeTrip as any).id,
       latitude,
       longitude,
       accuracy,
@@ -312,14 +312,14 @@ export const updateLocation = async (
 
     // Recalculate mileage with new location
     const allLocations = await Location.findAll({
-      where: { tripId: activeTrip.id },
+      where: { tripId: (activeTrip as any).id },
       order: [['timestamp', 'ASC']],
     });
 
     const filtered = filterGPSNoise(allLocations as unknown as Location[]);
-    activeTrip.mileage = calculateTotalDistance(filtered);
-    activeTrip.duration = activeTrip.getDuration();
-    activeTrip.averageSpeed = calculateAverageSpeed(filtered, activeTrip.duration);
+    (activeTrip as any).mileage = calculateTotalDistance(filtered);
+    (activeTrip as any).duration = activeTrip.getDuration();
+    (activeTrip as any).averageSpeed = calculateAverageSpeed(filtered, (activeTrip as any).duration);
 
     await activeTrip.save();
 
@@ -333,8 +333,8 @@ export const updateLocation = async (
         accuracy,
         timestamp: new Date(),
       },
-      mileage: activeTrip.mileage,
-      duration: activeTrip.duration,
+      mileage: (activeTrip as any).mileage,
+      duration: (activeTrip as any).duration,
     });
 
     res.json({

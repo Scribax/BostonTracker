@@ -192,7 +192,7 @@ export const getAllUsers = async (
             return {
               ...userDTO,
               hasActiveTrip: true,
-              tripId: activeTrip.id,
+              tripId: (activeTrip as any).id,
             };
           }
         }

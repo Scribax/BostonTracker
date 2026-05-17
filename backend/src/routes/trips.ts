@@ -42,19 +42,19 @@ router.get('/history', authenticate, authorize('admin'), async (
     const tripsData = await Promise.all(
       trips.map(async (trip) => {
         const locationCount = await Location.count({
-          where: { tripId: trip.id },
+          where: { tripId: (trip as any).id },
         });
 
         return {
-          id: trip.id,
-          deliveryId: trip.deliveryId,
+          id: (trip as any).id,
+          deliveryId: (trip as any).deliveryId,
           employeeId: (trip as any).delivery?.employeeId,
-          startTime: trip.startTime,
-          endTime: trip.endTime,
-          mileage: trip.mileage,
+          startTime: (trip as any).startTime,
+          endTime: (trip as any).endTime,
+          mileage: (trip as any).mileage,
           duration: trip.getDuration(),
           averageSpeed: trip.getAverageSpeed(),
-          status: trip.status,
+          status: (trip as any).status,
           totalLocations: locationCount,
         };
       })
@@ -118,15 +118,15 @@ router.get('/details/:id', authenticate, authorize('admin'), async (
     res.json({
       success: true,
       data: {
-        id: trip.id,
-        deliveryId: trip.deliveryId,
+        id: (trip as any).id,
+        deliveryId: (trip as any).deliveryId,
         employeeId: (trip as any).delivery?.employeeId,
-        startTime: trip.startTime,
-        endTime: trip.endTime,
-        mileage: trip.mileage,
+        startTime: (trip as any).startTime,
+        endTime: (trip as any).endTime,
+        mileage: (trip as any).mileage,
         duration: trip.getDuration(),
         averageSpeed: trip.getAverageSpeed(),
-        status: trip.status,
+        status: (trip as any).status,
         locations: (trip as any).locations || [],
       },
     });
@@ -162,7 +162,7 @@ router.delete('/details/:id', authenticate, authorize('admin'), async (
       return;
     }
 
-    if (trip.status === 'active') {
+    if ((trip as any).status === 'active') {
       res.status(400).json({
         success: false,
         message: 'No se puede eliminar un viaje activo',
