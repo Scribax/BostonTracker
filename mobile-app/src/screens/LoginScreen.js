@@ -68,20 +68,26 @@ const LoginScreen = ({ navigation }) => {
     setError('');
 
     try {
+      Alert.alert('DEBUG', 'Iniciando login con: ' + credentials.employeeId);
       const result = await login(credentials);
-      
+      Alert.alert('DEBUG', 'Login result: ' + JSON.stringify(result));
+
       if (result.success) {
+        Alert.alert('DEBUG', 'Login exitoso. Role: ' + result.user.role);
         if (result.user.role !== 'delivery') {
           setError('Esta aplicación es solo para deliverys');
+          Alert.alert('ERROR', 'Rol incorrecto: ' + result.user.role);
           return;
         }
-        
+
         // La navegación se maneja en el useEffect
       } else {
         setError(result.error || 'Error en el login');
+        Alert.alert('ERROR', result.error || 'Error en el login');
       }
     } catch (err) {
       setError('Error de conexión. Verifica tu internet.');
+      Alert.alert('ERROR', 'Excepción: ' + err.message);
     } finally {
       setIsLoading(false);
     }
