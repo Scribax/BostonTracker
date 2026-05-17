@@ -35,38 +35,25 @@ function calculateHaversineDistance(
   return R * c;
 }
 
-class Trip extends Model<TripAttributes, TripCreationAttributes> implements TripAttributes {
-  public id!: string;
-  public deliveryId!: string;
-  public startTime!: Date;
-  public endTime?: Date;
-  public status!: 'active' | 'completed' | 'paused';
-  public mileage!: number;
-  public duration!: number;
-  public averageSpeed!: number;
-  public realTimeMetrics!: string;
-  public notes?: string;
-  public readonly createdAt!: Date;
-  public readonly updatedAt!: Date;
-
+class Trip extends Model<TripAttributes, TripCreationAttributes> {
   // Virtual fields
   public locations?: Location[];
 
   // Instance methods
   public getDuration(): number {
-    const end = this.endTime || new Date();
-    return Math.round((end.getTime() - this.startTime.getTime()) / 1000 / 60); // minutes
+    const end = (this as any).endTime || new Date();
+    return Math.round((end.getTime() - (this as any).startTime.getTime()) / 1000 / 60); // minutes
   }
 
   public getAverageSpeed(): number {
     const duration = this.getDuration() / 60; // hours
     if (duration === 0) return 0;
-    return Math.round((this.mileage / duration) * 100) / 100;
+    return Math.round(((this as any).mileage / duration) * 100) / 100;
   }
 
   public getRealTimeMetrics(): RealTimeMetrics {
     try {
-      return JSON.parse(this.realTimeMetrics) as RealTimeMetrics;
+      return JSON.parse((this as any).realTimeMetrics) as RealTimeMetrics;
     } catch {
       return {
         currentSpeed: 0,
@@ -81,11 +68,11 @@ class Trip extends Model<TripAttributes, TripCreationAttributes> implements Trip
   public updateRealTimeMetrics(newMetrics: Partial<RealTimeMetrics>): void {
     const current = this.getRealTimeMetrics();
     const updated = { ...current, ...newMetrics };
-    this.realTimeMetrics = JSON.stringify(updated);
+    (this as any).realTimeMetrics = JSON.stringify(updated);
   }
 
   public setRealTimeMetrics(metrics: RealTimeMetrics): void {
-    this.realTimeMetrics = JSON.stringify(metrics);
+    (this as any).realTimeMetrics = JSON.stringify(metrics);
   }
 
   // Calculate distance from array of locations
