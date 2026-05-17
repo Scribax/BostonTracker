@@ -69,7 +69,6 @@ router.get('/history', authenticate, authorize('admin'), async (
         page,
         total: count,
         limit,
-        totalPages: Math.ceil(count / limit),
       },
     });
   } catch (error) {
