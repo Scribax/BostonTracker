@@ -203,11 +203,9 @@ export const getAllUsers = async (
 
     res.json({
       success: true,
-      data: {
-        users: usersWithTripInfo as UserDTO[],
-        count: users.length,
-      },
-    });
+      data: usersWithTripInfo as UserDTO[],
+      count: users.length,
+    } as any);
   } catch (error) {
     console.error('Get all users error:', error);
     res.status(500).json({

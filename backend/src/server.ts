@@ -17,6 +17,8 @@ import { sequelize, testConnection } from '@config/database';
 import { User, Trip, Location } from '@models/index';
 import authRoutes from '@routes/auth';
 import deliveryRoutes from '@routes/deliveries';
+import tripRoutes from '@routes/trips';
+import apkRoutes from '@routes/apk';
 import { ApiResponse, AuthenticatedRequest, ServerToClientEvents, ClientToServerEvents } from '@types/index';
 
 // Load environment variables
@@ -185,6 +187,8 @@ app.use((req: Request, _res: Response, next: NextFunction) => {
 
 app.use('/api/auth', authRoutes);
 app.use('/api/deliveries', deliveryRoutes);
+app.use('/api/trips', tripRoutes);
+app.use('/api/apk', apkRoutes);
 
 // Health check endpoint
 app.get('/api/health', (_req: Request, res: Response<ApiResponse<{ status: string; timestamp: string; version: string }>>) => {
