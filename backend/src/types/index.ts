@@ -115,7 +115,6 @@ export interface Trip {
 export interface TripDTO {
   id: string;
   deliveryId: string;
-  deliveryName: string;
   startTime: Date;
   endTime?: Date;
   status: TripStatus;
@@ -157,7 +156,6 @@ export interface UpdateMetricsRequest {
 export interface ActiveDelivery {
   id: string;
   deliveryId: string;
-  deliveryName: string;
   employeeId?: string;
   startTime: Date;
   mileage: number;
