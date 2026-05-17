@@ -61,12 +61,6 @@ User.init(
       type: DataTypes.STRING(100),
       unique: true,
       allowNull: true,
-      validate: {
-        isEmail: {
-          msg: 'Email inválido',
-          if: (value: string) => value !== null && value !== '',
-        },
-      },
     },
     employeeId: {
       type: DataTypes.STRING(50),
