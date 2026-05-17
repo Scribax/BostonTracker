@@ -189,8 +189,41 @@ onPress: async () => {
         console.warn('❌ Error de conexión Socket:', data.error);
       };
       
+      // Handler para viaje detenido remotamente
+      const handleTripStopped = (data) => {
+        console.log('🛑 Viaje detenido remotamente por admin:', data);
+        
+        Alert.alert(
+          '🛑 Viaje Detenido',
+          `Tu viaje ha sido detenido remotamente desde el dashboard.\n\nDistancia: ${(data.totalMileage || 0).toFixed(2)} km\nDuración: ${Math.floor((data.duration || 0) / 60)} min`,
+          [
+            {
+              text: 'Entendido',
+              onPress: async () => {
+                try {
+                  // Finalizar métricas
+                  if (tripMetricsService.hasActiveTrip()) {
+                    await tripMetricsService.endTrip();
+                  }
+                  
+                  // Detener tracking
+                  await stopTracking(async () => ({ success: true }));
+                  
+                  // Recargar
+                  await loadActiveTrip();
+                } catch (error) {
+                  console.error('Error procesando detención remota:', error);
+                }
+              }
+            }
+          ],
+          { cancelable: false }
+        );
+      };
+      
       // Registrar listeners para Socket.io
       socketService.on('tripStatusChanged', handleTripStatusChanged);
+      socketService.on('tripStopped', handleTripStopped);
       socketService.on('connected', handleSocketConnected);
       socketService.on('disconnected', handleSocketDisconnected);
       socketService.on('connection_error', handleConnectionError);
@@ -206,6 +239,7 @@ onPress: async () => {
       return () => {
         try {
           socketService.off('tripStatusChanged', handleTripStatusChanged);
+          socketService.off('tripStopped', handleTripStopped);
           socketService.off('connected', handleSocketConnected);
           socketService.off('disconnected', handleSocketDisconnected);
           socketService.off('connection_error', handleConnectionError);

@@ -75,6 +75,14 @@ class SocketService {
         this._emitToListeners('tripStatusChanged', data);
       });
 
+      // 🔥 CRITICAL: Viaje detenido remotamente por admin
+      this.socket.on('tripStopped', (data) => {
+        console.log('🛑 Viaje detenido remotamente:', data);
+
+        // Notificar a listeners - esto detiene el tracking en la app
+        this._emitToListeners('tripStopped', data);
+      });
+
       // Otros eventos posibles
       this.socket.on('notification', (data) => {
         console.log('🔔 Notificación recibida:', data);
