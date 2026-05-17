@@ -93,7 +93,7 @@ class ApiService {
       if (response.data.success) {
         return {
           success: true,
-          data: response.data
+          data: response.data.data || response.data
         };
       } else {
         return {
