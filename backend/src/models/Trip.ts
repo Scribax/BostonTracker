@@ -36,23 +36,21 @@ function calculateHaversineDistance(
 }
 
 class Trip extends Model<TripAttributes, TripCreationAttributes> implements TripAttributes {
-  public id!: string;
-  public deliveryId!: string;
-  public startTime!: Date;
-  public endTime?: Date;
-  public status!: 'active' | 'completed' | 'paused';
-  public mileage!: number;
-  public duration!: number;
-  public averageSpeed!: number;
-  public realTimeMetrics!: string;
-  public notes?: string;
+  declare id: string;
+  declare deliveryId: string;
+  declare startTime: Date;
+  declare endTime?: Date;
+  declare status: 'active' | 'completed' | 'paused';
+  declare mileage: number;
+  declare duration: number;
+  declare averageSpeed: number;
+  declare realTimeMetrics: string;
+  declare notes?: string;
+  declare readonly createdAt: Date;
+  declare readonly updatedAt: Date;
 
   // Virtual fields
   public locations?: Location[];
-
-  // Timestamps
-  public readonly createdAt!: Date;
-  public readonly updatedAt!: Date;
 
   // Instance methods
   public getDuration(): number {
