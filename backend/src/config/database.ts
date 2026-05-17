@@ -6,7 +6,7 @@
 import { Sequelize } from 'sequelize';
 import dotenv from 'dotenv';
 
-import { DatabaseConfig } from '@types/index';
+import type { DatabaseConfig } from '../types/index';
 
 dotenv.config();
 

@@ -5,10 +5,10 @@
 import { DataTypes, Model } from 'sequelize';
 
 import { sequelize } from '@config/database';
-import {
+import type {
   LocationAttributes,
   LocationCreationAttributes,
-} from '@types/database';
+} from '../types/database';
 
 class LocationModel
   extends Model<LocationAttributes, LocationCreationAttributes>

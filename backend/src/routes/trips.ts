@@ -6,7 +6,7 @@ import { Router, Response } from 'express';
 
 import { Trip, User, Location } from '@models/index';
 import { authenticate, authorize } from '@middleware/auth';
-import { ApiResponse, AuthenticatedRequest } from '@types/index';
+import type { ApiResponse, AuthenticatedRequest } from '../types/index';
 
 const router = Router();
 
@@ -64,9 +64,13 @@ router.get('/history', authenticate, authorize('admin'), async (
     res.json({
       success: true,
       data: tripsData,
-      count,
-      page,
-      totalPages: Math.ceil(count / limit),
+      meta: {
+        count,
+        page,
+        total: count,
+        limit,
+        totalPages: Math.ceil(count / limit),
+      },
     });
   } catch (error) {
     console.error('Get trip history error:', error);

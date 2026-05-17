@@ -36,6 +36,7 @@ export interface UserInstance extends Model<UserAttributes, UserCreationAttribut
 export interface TripAttributes {
   id: string;
   deliveryId: string;
+  deliveryName?: string;
   startTime: Date;
   endTime?: Date;
   status: TripStatus;
@@ -43,6 +44,7 @@ export interface TripAttributes {
   duration: number;
   averageSpeed: number;
   realTimeMetrics: string; // JSON string
+  currentLocation?: any; // JSON object
   notes?: string;
   createdAt?: Date;
   updatedAt?: Date;

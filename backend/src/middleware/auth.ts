@@ -6,7 +6,7 @@ import { Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
 
 import { User } from '@models/index';
-import { ApiResponse, AuthenticatedRequest, UserRole } from '@types/index';
+import type { ApiResponse, AuthenticatedRequest, UserRole } from '../types/index';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key';
 
@@ -60,17 +60,9 @@ export const authenticate = async (
       return;
     }
 
-    // Attach user to request
-    req.user = {
-      id: user.id,
-      name: user.name,
-      email: user.email,
-      employeeId: user.employeeId,
-      role: user.role,
-      phone: user.phone,
-      isActive: user.isActive,
-      lastLogin: user.lastLogin,
-    };
+    // Attach user to request (exclude password)
+    const { password, ...userWithoutPassword } = user.get();
+    req.user = userWithoutPassword as any;
 
     next();
   } catch (error) {

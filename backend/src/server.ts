@@ -14,12 +14,12 @@ import dotenv from 'dotenv';
 import jwt from 'jsonwebtoken';
 
 import { sequelize, testConnection } from '@config/database';
-import { User, Trip, Location } from '@models/index';
-import authRoutes from '@routes/auth';
-import deliveryRoutes from '@routes/deliveries';
-import tripRoutes from '@routes/trips';
-import apkRoutes from '@routes/apk';
-import { ApiResponse, AuthenticatedRequest, ServerToClientEvents, ClientToServerEvents } from '@types/index';
+import { User, Trip, Location } from './models/index';
+import authRoutes from './routes/auth';
+import deliveryRoutes from './routes/deliveries';
+import tripRoutes from './routes/trips';
+import apkRoutes from './routes/apk';
+import type { ApiResponse, AuthenticatedRequest, ServerToClientEvents, ClientToServerEvents } from './types/index';
 
 // Load environment variables
 dotenv.config();

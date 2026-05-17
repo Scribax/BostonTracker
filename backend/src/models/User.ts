@@ -6,11 +6,11 @@ import { DataTypes, Model } from 'sequelize';
 import bcrypt from 'bcryptjs';
 
 import { sequelize } from '@config/database';
-import {
+import type {
   UserAttributes,
   UserCreationAttributes,
   UserInstance,
-} from '@types/database';
+} from '../types/database';
 
 class User
   extends Model<UserAttributes, UserCreationAttributes>
@@ -36,9 +36,9 @@ class User
   }
 
   public toJSON(): Omit<UserAttributes, 'password'> {
-    const values = { ...this.get() } as UserAttributes;
+    const values = { ...this.get() } as Partial<UserAttributes>;
     delete values.password;
-    return values;
+    return values as Omit<UserAttributes, 'password'>;
   }
 }
 

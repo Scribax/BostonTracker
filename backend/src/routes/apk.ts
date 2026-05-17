@@ -5,7 +5,7 @@
 import { Router, Response, Request } from 'express';
 
 import { authenticate, authorize } from '@middleware/auth';
-import { AuthenticatedRequest } from '@types/index';
+import type { AuthenticatedRequest } from '../types/index';
 
 const router = Router();
 

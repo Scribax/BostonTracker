@@ -7,14 +7,14 @@ import jwt from 'jsonwebtoken';
 import { Op } from 'sequelize';
 
 import { User, Trip } from '@models/index';
-import {
+import type {
   ApiResponse,
   AuthenticatedRequest,
   LoginRequest,
   LoginResponse,
   UserDTO,
   CreateUserRequest,
-} from '@types/index';
+} from '../types/index';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key';
 const JWT_EXPIRE = process.env.JWT_EXPIRE || '7d';
@@ -23,7 +23,7 @@ const JWT_EXPIRE = process.env.JWT_EXPIRE || '7d';
  * Generate JWT token
  */
 const generateToken = (id: string): string => {
-  return jwt.sign({ id }, JWT_SECRET, { expiresIn: JWT_EXPIRE });
+  return jwt.sign({ id }, JWT_SECRET as string, { expiresIn: JWT_EXPIRE } as any);
 };
 
 /**
@@ -92,7 +92,7 @@ export const login = async (
 
     // Update last login
     user.lastLogin = new Date();
-    await user.save({ validateBeforeSave: false });
+    await user.save({ validate: false } as any);
 
     // Generate token
     const token = generateToken(user.id);

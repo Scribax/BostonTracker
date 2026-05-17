@@ -3,7 +3,7 @@
 // Haversine formula, distance calculations
 // ==========================================
 
-import { GeoPoint, DistanceResult, Location } from '@types/index';
+import type { GeoPoint, DistanceResult, Location } from '../types/index';
 
 /**
  * Earth's radius in kilometers

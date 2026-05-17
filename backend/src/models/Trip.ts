@@ -4,13 +4,13 @@
 
 import { DataTypes, Model } from 'sequelize';
 
-import { sequelize } from '@config/database';
-import {
+import { sequelize } from '../config/database';
+import type {
   TripAttributes,
   TripCreationAttributes,
   RealTimeMetrics,
-} from '@types/index';
-import { Location } from '@types/index';
+  Location,
+} from '../types/index';
 
 // Helper function to calculate Haversine distance
 function calculateHaversineDistance(
@@ -168,6 +168,14 @@ Trip.init(
         totalTime: 0,
         validLocations: 0,
       }),
+    },
+    deliveryName: {
+      type: DataTypes.STRING,
+      allowNull: true,
+    },
+    currentLocation: {
+      type: DataTypes.JSON,
+      allowNull: true,
     },
     notes: {
       type: DataTypes.STRING(500),

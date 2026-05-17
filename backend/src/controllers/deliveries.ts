@@ -6,7 +6,7 @@ import { Response } from 'express';
 import { Server as SocketIOServer } from 'socket.io';
 
 import { User, Trip, Location } from '@models/index';
-import {
+import type {
   ApiResponse,
   AuthenticatedRequest,
   ActiveDelivery,
@@ -16,8 +16,8 @@ import {
   UpdateMetricsRequest,
   TripEvent,
   TripCompletedEvent,
-  Location,
-} from '@types/index';
+  Location as LocationType,
+} from '../types/index';
 import {
   calculateTotalDistance,
   filterGPSNoise,
