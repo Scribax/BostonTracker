@@ -90,7 +90,8 @@ const limiter = rateLimit({
   },
   standardHeaders: true,
   legacyHeaders: false,
-  keyGenerator: (req) => req.ip || 'unknown',
+  keyGenerator: (req: Request) => req.ip || 'unknown',
+  skip: () => false,
 });
 
 const locationLimiter = rateLimit({
@@ -102,7 +103,8 @@ const locationLimiter = rateLimit({
   },
 });
 
-app.use(limiter);
+// Temporarily disabled rate limiter causing 502 errors
+// app.use(limiter);
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
 
