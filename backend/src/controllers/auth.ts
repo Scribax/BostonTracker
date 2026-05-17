@@ -281,16 +281,13 @@ export const createUser = async (
       }
     }
 
-    // Create user
-    const user = await User.create({
-      name,
-      email,
-      employeeId,
-      password,
-      role,
-      phone,
-      isActive: true,
-    });
+    // Create user - only pass defined fields to avoid NULL unique constraint issues
+    const createData: any = { name, password, role, isActive: true };
+    if (email) createData.email = email;
+    if (employeeId) createData.employeeId = employeeId;
+    if (phone) createData.phone = phone;
+
+    const user = await User.create(createData);
 
     res.status(201).json({
       success: true,
@@ -299,10 +296,11 @@ export const createUser = async (
     });
   } catch (error) {
     console.error('Create user error:', error);
+    const errMsg = error instanceof Error ? error.message : String(error);
     res.status(500).json({
       success: false,
-      message: 'Error interno del servidor',
-      error: error instanceof Error ? error.message : 'Unknown error',
+      message: `Error creando usuario: ${errMsg}`,
+      error: errMsg,
     });
   }
 };
