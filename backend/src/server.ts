@@ -156,6 +156,13 @@ io.on('connection', (socket) => {
     console.log(`👤 ${socket.id} joined admin room`);
   });
 
+  // 🔥 CRITICAL: Join delivery room for individual notifications
+  socket.on('join-delivery', (userId: string) => {
+    const roomName = `delivery-${userId}`;
+    socket.join(roomName);
+    console.log(`🚚 ${socket.id} joined delivery room: ${roomName}`);
+  });
+
   // Handle location updates from mobile app
   socket.on('location-update', async (data) => {
     try {

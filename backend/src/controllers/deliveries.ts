@@ -250,6 +250,19 @@ export const stopDeliveryTrip = async (
       duration: (activeTrip as any).duration,
     } as TripCompletedEvent);
 
+    // 🔥 CRITICAL: Also notify the delivery's mobile app
+    const deliveryRoom = `delivery-${deliveryId}`;
+    io.to(deliveryRoom).emit('tripStopped', {
+      tripId: (activeTrip as any).id,
+      deliveryId: (activeTrip as any).deliveryId,
+      endTime: (activeTrip as any).endTime,
+      totalMileage: (activeTrip as any).mileage,
+      duration: (activeTrip as any).duration,
+      stoppedBy: 'admin',
+      message: 'Tu viaje ha sido detenido desde el dashboard',
+    });
+    console.log(`📱 Notificación enviada a ${deliveryRoom}: viaje detenido`);
+
     res.json({
       success: true,
       message: 'Viaje completado exitosamente',

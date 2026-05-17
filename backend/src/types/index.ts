@@ -215,12 +215,14 @@ export interface ServerToClientEvents {
   locationUpdate: (data: LocationUpdateEvent) => void;
   tripStarted: (data: TripEvent) => void;
   tripCompleted: (data: TripCompletedEvent) => void;
+  tripStopped: (data: TripStoppedEvent) => void;
   tripsUpdate: (data: TripDTO[]) => void;
   connection_error: (data: { error: string }) => void;
 }
 
 export interface ClientToServerEvents {
   'join-admin': () => void;
+  'join-delivery': (userId: string) => void;
   'location-update': (data: LocationUpdatePayload) => void;
 }
 
@@ -254,6 +256,16 @@ export interface TripCompletedEvent {
   endTime: Date;
   totalMileage: number;
   duration: number;
+}
+
+export interface TripStoppedEvent {
+  tripId: string;
+  deliveryId: string;
+  endTime: Date;
+  totalMileage: number;
+  duration: number;
+  stoppedBy: 'admin' | 'delivery';
+  message: string;
 }
 
 // ==========================================
