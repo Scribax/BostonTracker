@@ -56,6 +56,9 @@ const CORS_ORIGINS = [
 const app: Application = express();
 const server = http.createServer(app);
 
+// Trust proxy for rate limiting behind reverse proxy
+app.set('trust proxy', 1);
+
 // Socket.io setup with proper typing
 const io = new SocketIOServer<ClientToServerEvents, ServerToClientEvents>(server, {
   cors: {
