@@ -90,6 +90,7 @@ const limiter = rateLimit({
   },
   standardHeaders: true,
   legacyHeaders: false,
+  keyGenerator: (req) => req.ip || 'unknown',
 });
 
 const locationLimiter = rateLimit({
