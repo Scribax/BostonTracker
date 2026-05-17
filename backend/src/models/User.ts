@@ -62,7 +62,10 @@ User.init(
       unique: true,
       allowNull: true,
       validate: {
-        isEmail: { msg: 'Email inválido' },
+        isEmail: {
+          msg: 'Email inválido',
+          if: (value: string) => value !== null && value !== '',
+        },
       },
     },
     employeeId: {
