@@ -27,8 +27,16 @@ router.get('/info', authenticate, authorize('admin'), async (
         downloadUrl: `http://${_req.get('host')}/apk/boston-tracker-latest.apk`,
         size: 0,
         updatedAt: new Date().toISOString(),
+        lastModified: new Date().toISOString(),
         available: false,
         message: 'APK no disponible aún. Compilar desde el proyecto mobile-app.',
+        features: [
+          'Tracking GPS en tiempo real',
+          'Inicio/fin de viaje con un toque',
+          'Modo offline con sincronización',
+          'Optimización de batería',
+          'Notificaciones push',
+        ],
       },
     });
   } catch (error) {
