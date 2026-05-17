@@ -79,10 +79,4 @@ LocationModel.init(
   }
 );
 
-// Define associations
-import Trip from './Trip';
-
-LocationModel.belongsTo(Trip, { foreignKey: 'tripId', as: 'trip' });
-Trip.hasMany(LocationModel, { foreignKey: 'tripId', as: 'locations' });
-
 export default LocationModel;
