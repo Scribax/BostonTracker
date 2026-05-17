@@ -38,14 +38,12 @@ const getIO = (req: AuthenticatedRequest): SocketIOServer => {
 const toTripDTO = (trip: Trip): TripDTO => ({
   id: trip.id,
   deliveryId: trip.deliveryId,
-  deliveryName: trip.deliveryName || 'Unknown',
   startTime: trip.startTime,
   endTime: trip.endTime,
   status: trip.status,
   mileage: trip.mileage,
   duration: trip.duration,
   averageSpeed: trip.averageSpeed,
-  currentLocation: trip.currentLocation,
   totalLocations: 0, // Will be populated separately
 });
 
@@ -79,13 +77,11 @@ export const getActiveDeliveries = async (
         return {
           id: trip.id,
           deliveryId: trip.deliveryId,
-          deliveryName: trip.deliveryName || (trip as unknown as { delivery?: { name: string } }).delivery?.name || 'Unknown',
           employeeId: (trip as unknown as { delivery?: { employeeId: string } }).delivery?.employeeId,
           startTime: trip.startTime,
           mileage: trip.mileage,
           duration: trip.getDuration(),
           averageSpeed: trip.getAverageSpeed(),
-          currentLocation: trip.currentLocation,
           status: trip.status,
           totalLocations: locationCount,
         };
@@ -149,7 +145,6 @@ export const startDeliveryTrip = async (
     // Create new trip
     const trip = await Trip.create({
       deliveryId,
-      deliveryName: delivery.name,
       startTime: new Date(),
       status: 'active',
       mileage: 0,
@@ -174,11 +169,6 @@ export const startDeliveryTrip = async (
         timestamp: new Date(),
       });
 
-      trip.currentLocation = {
-        latitude,
-        longitude,
-        timestamp: new Date(),
-      };
       await trip.save();
     }
 
@@ -187,9 +177,7 @@ export const startDeliveryTrip = async (
     io.to('admins').emit('tripStarted', {
       tripId: trip.id,
       deliveryId: trip.deliveryId,
-      deliveryName: trip.deliveryName || delivery.name,
       startTime: trip.startTime,
-      currentLocation: trip.currentLocation,
     } as TripEvent);
 
     res.status(201).json({
@@ -257,7 +245,6 @@ export const stopDeliveryTrip = async (
     io.to('admins').emit('tripCompleted', {
       tripId: activeTrip.id,
       deliveryId: activeTrip.deliveryId,
-      deliveryName: activeTrip.deliveryName || 'Unknown',
       endTime: activeTrip.endTime,
       totalMileage: activeTrip.mileage,
       duration: activeTrip.duration,
@@ -322,13 +309,6 @@ export const updateLocation = async (
       accuracy,
       timestamp: timestamp ? new Date(timestamp) : new Date(),
     });
-
-    // Update current location in trip
-    activeTrip.currentLocation = {
-      latitude,
-      longitude,
-      timestamp: new Date(),
-    };
 
     // Recalculate mileage with new location
     const allLocations = await Location.findAll({

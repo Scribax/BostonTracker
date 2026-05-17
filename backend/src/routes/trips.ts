@@ -48,7 +48,6 @@ router.get('/history', authenticate, authorize('admin'), async (
         return {
           id: trip.id,
           deliveryId: trip.deliveryId,
-          deliveryName: trip.deliveryName || (trip as any).delivery?.name || 'Unknown',
           employeeId: (trip as any).delivery?.employeeId,
           startTime: trip.startTime,
           endTime: trip.endTime,
@@ -121,7 +120,6 @@ router.get('/details/:id', authenticate, authorize('admin'), async (
       data: {
         id: trip.id,
         deliveryId: trip.deliveryId,
-        deliveryName: trip.deliveryName || (trip as any).delivery?.name || 'Unknown',
         employeeId: (trip as any).delivery?.employeeId,
         startTime: trip.startTime,
         endTime: trip.endTime,
