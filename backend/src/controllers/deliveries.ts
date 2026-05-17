@@ -177,6 +177,7 @@ export const startDeliveryTrip = async (
     io.to('admins').emit('tripStarted', {
       tripId: (trip as any).id,
       deliveryId: (trip as any).deliveryId,
+      deliveryName: delivery.name,
       startTime: (trip as any).startTime,
     } as TripEvent);
 
