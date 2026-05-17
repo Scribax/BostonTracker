@@ -39,7 +39,7 @@ try {
 import { StatusBar } from 'expo-status-bar';
 
 const HomeScreen = ({ navigation }) => {
-  const { user, logout } = useAuth();
+  const { user, logout, token } = useAuth();
   const { isOnline, isChecking, lastCheckTime, forceCheck, checkConnectivity } = useConnectivity();
   const {
     isTracking,
@@ -108,7 +108,7 @@ const HomeScreen = ({ navigation }) => {
       
       // Intentar conectar Socket.io primero
       try {
-        socketService.connect(user.id);
+        socketService.connect(user.id, token);
         console.log('🔌 Intentando conectar vía Socket.io...');
       } catch (error) {
         console.warn('❌ Socket.io no disponible, usando HTTP polling como fallback');

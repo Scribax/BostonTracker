@@ -191,7 +191,7 @@ const RealTimeMetrics = ({ isActive = false }) => {
       <View style={styles.header}>
         <View style={styles.headerLeft}>
           <Text style={styles.title}>📊 Métricas en Tiempo Real</Text>
-          <Text style={styles.subtitle}>Viaje #{metrics.tripId.split('_')[1]?.substring(0, 8)}</Text>
+          <Text style={styles.subtitle}>Viaje #{metrics.tripId?.split('_')[1]?.substring(0, 8) || metrics.tripId?.substring(0, 8) || 'N/A'}</Text>
         </View>
         <View style={[styles.statusIndicator, { backgroundColor: '#28a745' }]}>
           <View style={styles.statusDot} />

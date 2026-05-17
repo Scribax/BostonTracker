@@ -16,7 +16,7 @@ class SocketService {
   }
 
   // Conectar al servidor Socket.io
-  connect(userId) {
+  connect(userId, token = null) {
     try {
       if (this.socket && this.isConnected) {
         console.log('Socket ya conectado');
@@ -33,6 +33,7 @@ class SocketService {
         forceNew: true,
         autoConnect: true,
         reconnection: false, // No intentar reconectar automáticamente
+        auth: token ? { token } : undefined,
       });
 
       // Eventos de conexión
