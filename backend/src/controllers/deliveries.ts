@@ -74,16 +74,37 @@ export const getActiveDeliveries = async (
           where: { tripId: (trip as any).id },
         });
 
+        // Get last location for real-time map
+        const lastLoc = await Location.findOne({
+          where: { tripId: (trip as any).id },
+          order: [['timestamp', 'DESC']],
+        });
+
+        // Get real-time metrics
+        const rtMetrics = trip.getRealTimeMetrics ? trip.getRealTimeMetrics() : null;
+
         return {
           id: (trip as any).id,
           deliveryId: (trip as any).deliveryId,
+          deliveryName: (trip as any).delivery?.name,
           employeeId: (trip as any).delivery?.employeeId,
+          delivery: (trip as any).delivery ? {
+            name: (trip as any).delivery.name,
+            employeeId: (trip as any).delivery.employeeId,
+          } : null,
           startTime: (trip as any).startTime,
           mileage: (trip as any).mileage,
           duration: trip.getDuration(),
           averageSpeed: trip.getAverageSpeed(),
           status: (trip as any).status,
           totalLocations: locationCount,
+          lastLocation: lastLoc ? {
+            latitude: (lastLoc as any).latitude,
+            longitude: (lastLoc as any).longitude,
+            accuracy: (lastLoc as any).accuracy,
+            timestamp: (lastLoc as any).timestamp,
+          } : null,
+          metrics: rtMetrics,
         };
       })
     );
@@ -178,6 +199,7 @@ export const startDeliveryTrip = async (
       tripId: (trip as any).id,
       deliveryId: (trip as any).deliveryId,
       deliveryName: delivery.name,
+      employeeId: delivery.employeeId,
       startTime: (trip as any).startTime,
     } as TripEvent);
 
@@ -241,7 +263,7 @@ export const stopDeliveryTrip = async (
 
     await activeTrip.save();
 
-    // Emit event to admins
+    // Emit event to admins (both tripCompleted and tripStopped for compatibility)
     const io = getIO(req);
     io.to('admins').emit('tripCompleted', {
       tripId: (activeTrip as any).id,
@@ -250,6 +272,12 @@ export const stopDeliveryTrip = async (
       totalMileage: (activeTrip as any).mileage,
       duration: (activeTrip as any).duration,
     } as TripCompletedEvent);
+
+    io.to('admins').emit('tripStopped', {
+      tripId: (activeTrip as any).id,
+      deliveryId: (activeTrip as any).deliveryId,
+      endTime: (activeTrip as any).endTime,
+    });
 
     // 🔥 CRITICAL: Also notify the delivery's mobile app
     const deliveryRoom = `delivery-${deliveryId}`;
@@ -341,6 +369,12 @@ export const updateLocation = async (
     const io = getIO(req);
     io.to('admins').emit('locationUpdate', {
       deliveryId,
+      latitude,
+      longitude,
+      accuracy,
+      speed: speed || 0,
+      heading: heading || 0,
+      timestamp: new Date().toISOString(),
       currentLocation: {
         latitude,
         longitude,
@@ -396,6 +430,17 @@ export const updateMetrics = async (
     });
 
     await activeTrip.save();
+
+    // Emit to admins
+    const io = getIO(req);
+    io.to('admins').emit('metricsUpdate', {
+      deliveryId,
+      currentSpeed: metrics.currentSpeed,
+      averageSpeed: metrics.averageSpeed,
+      maxSpeed: metrics.maxSpeed,
+      totalDistance: metrics.totalDistance,
+      totalTime: metrics.totalTime,
+    });
 
     res.json({
       success: true,

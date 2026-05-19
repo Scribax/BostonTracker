@@ -145,6 +145,7 @@ export interface UpdateMetricsRequest {
   currentSpeed: number;
   averageSpeed: number;
   maxSpeed: number;
+  totalDistance: number;
   totalTime: number;
   validLocations: number;
 }
@@ -213,11 +214,22 @@ export interface PaginatedResponse<T> extends ApiResponse<T[]> {
 
 export interface ServerToClientEvents {
   locationUpdate: (data: LocationUpdateEvent) => void;
+  metricsUpdate: (data: MetricsUpdateEvent) => void;
   tripStarted: (data: TripEvent) => void;
   tripCompleted: (data: TripCompletedEvent) => void;
   tripStopped: (data: TripStoppedEvent) => void;
   tripsUpdate: (data: TripDTO[]) => void;
+  inactivityAlert: (data: any) => void;
   connection_error: (data: { error: string }) => void;
+}
+
+export interface MetricsUpdateEvent {
+  deliveryId: string;
+  currentSpeed: number;
+  averageSpeed: number;
+  maxSpeed: number;
+  totalDistance: number;
+  totalTime: number;
 }
 
 export interface ClientToServerEvents {

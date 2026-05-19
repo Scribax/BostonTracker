@@ -65,9 +65,9 @@ export const login = async (
     let user: User | null = null;
 
     if (email) {
-      user = await User.findOne({ where: { email, role: 'admin' } });
+      user = await User.findOne({ where: { email } });
     } else if (employeeId) {
-      user = await User.findOne({ where: { employeeId, role: 'delivery' } });
+      user = await User.findOne({ where: { employeeId } });
     }
 
     // Verify user and password

@@ -48,12 +48,16 @@ router.get('/history', authenticate, authorize('admin'), async (
         return {
           id: (trip as any).id,
           deliveryId: (trip as any).deliveryId,
-          employeeId: (trip as any).delivery?.employeeId,
+          delivery: (trip as any).delivery ? {
+            name: (trip as any).delivery.name,
+            employeeId: (trip as any).delivery.employeeId,
+          } : null,
           startTime: (trip as any).startTime,
           endTime: (trip as any).endTime,
-          mileage: (trip as any).mileage,
-          duration: trip.getDuration(),
-          averageSpeed: trip.getAverageSpeed(),
+          totalMileage: (trip as any).mileage || 0,
+          totalTime: (trip as any).duration || trip.getDuration() || 0,
+          averageSpeed: trip.getAverageSpeed() || 0,
+          maxSpeed: 0,
           status: (trip as any).status,
           totalLocations: locationCount,
         };
